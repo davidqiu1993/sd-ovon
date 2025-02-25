@@ -13,9 +13,14 @@ function ensure_success() {
 }
 
 
+# prepare runtime environment
 cd $DP_ROOT
 
+# activate conda environment
 eval "$(conda shell.bash hook)"
+conda activate sd-ovon
+ensure_success
+conda env list
 
 
 # TODO: install
