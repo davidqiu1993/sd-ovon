@@ -11,7 +11,8 @@ DP_COMP_3DSMAPS=$DP_ROOT/components/3dsmaps
 DP_COMP_SIM=$DP_ROOT/components/open-nav-sim
 
 TASK_TIMESTAMP=$(date +"%Y%m%d_%H%M%S_%6N")
-INSTEXT_CLASSES="table desk chair sofa"
+RECEPTABLE_CLASSES="table desk chair sofa stool bed"
+NEGATIVE_CLASSES="building room basement corridor floor wall corner ceiling None none furniture dark"
 FP_SCENE=""
 GRAVITY_DIRECTION="-z"
 OLLAMA_HOST="http://localhost:11434"
@@ -118,19 +119,24 @@ for dp_obs_floor in $dp_obs_floors; do
     mkdir -p $DP_ARTIFACTS_OBS_STD
     ensure_success
     dataset_name="`basename $dp_obs_floor`"".std"
-    # python $DP_COMP_3DSMAPS/src/datasets.py \
-    #     --format habitat \
-    #     --input $dp_obs_floor \
-    #     --output "$DP_ARTIFACTS_OBS_STD""/""$dataset_name"
-    # ensure_success
+    dp_obs_floor_std="$DP_ARTIFACTS_OBS_STD""/""$dataset_name"
+    if [[ ! -d $dp_obs_floor_std ]]; then
+        python $DP_COMP_3DSMAPS/src/datasets.py \
+            --format habitat \
+            --input $dp_obs_floor \
+            --output $dp_obs_floor_std
+        ensure_success
+    else
+        echo "Standardized observations dataset already exists: \"$dp_obs_floor_std\"."
+    fi
 
     # extract instances
     mkdir -p $DP_ARTIFACTS_INSTEXT
     ensure_success
     python $DP_COMP_3DSMAPS/src/instance_extraction.py \
-        --dataset "$DP_ARTIFACTS_OBS_STD""/""$dataset_name" \
-        --artifacts "$DP_ARTIFACTS_INSTEXT" \
-        --classes $INSTEXT_CLASSES
+        --dataset $dp_obs_floor_std \
+        --artifacts $DP_ARTIFACTS_INSTEXT \
+        --negative-classes $NEGATIVE_CLASSES
     ensure_success
 
     # semantic slam
@@ -141,6 +147,12 @@ for dp_obs_floor in $dp_obs_floors; do
         --artifacts="$DP_ARTIFACTS_SSLAM" \
         --gravity-direction="$GRAVITY_DIRECTION" \
         --ollama="$OLLAMA_HOST"
+    ensure_success
+
+    # use conda environment
+    deactivate
+    ensure_success
+    conda activate sd-ovon
     ensure_success
 
 done
