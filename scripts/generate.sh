@@ -12,7 +12,7 @@ DP_COMP_SIM=$DP_ROOT/components/open-nav-sim
 
 TASK_TIMESTAMP=$(date +"%Y%m%d_%H%M%S_%6N")
 RECEPTABLE_CLASSES="table desk chair sofa stool bed"
-NEGATIVE_CLASSES="building room basement corridor floor wall corner ceiling furniture dark"
+NEGATIVE_CLASSES="sky building *room basement corridor floor wall corner ceiling furniture dark"
 FP_SCENE=""
 GRAVITY_DIRECTION="-z"
 OLLAMA_HOST="http://localhost:11434"
