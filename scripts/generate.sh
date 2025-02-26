@@ -10,9 +10,9 @@ DP_ARTIFACTS_SSLAM=$DP_ARTIFACTS/semantic_slam
 DP_COMP_3DSMAPS=$DP_ROOT/components/3dsmaps
 DP_COMP_SIM=$DP_ROOT/components/open-nav-sim
 
-TASK_TIMESTAMP=$(date +"%Y%m%d_%H%M%S_%6N")
-RECEPTABLE_CLASSES="table desk chair sofa stool bed"
-NEGATIVE_CLASSES="sky building *room basement corridor floor wall corner ceiling furniture dark"
+TASK_ID=$(date +"%Y%m%d_%H%M%S_%6N")
+RECEPTABLE_CLASSES="table desk dresser bookshelf shelf bed sofa couch"  # chair armchair stool
+NEGATIVE_CLASSES="sky building *room *office basement corridor floor wall corner ceiling furniture dark"
 FP_SCENE=""
 GRAVITY_DIRECTION="-z"
 OLLAMA_HOST="http://localhost:11434"
@@ -48,9 +48,9 @@ while (( "$#" )); do
             shift 2
             ;;
 
-        -t|--timestamp)
-            # task timestamp
-            TASK_TIMESTAMP="$2"
+        -t|--task-id)
+            # task id
+            TASK_ID="$2"
             shift 2
             ;;
 
@@ -84,7 +84,7 @@ fi
 # prepare runtime environment
 cd $DP_ROOT
 
-echo "TASK_TIMESTAMP: $TASK_TIMESTAMP"
+echo "TASK_ID: $TASK_ID"
 
 # activate conda environment
 eval "$(conda shell.bash hook)"
@@ -96,7 +96,7 @@ conda env list
 # sample observations
 mkdir -p $DP_ARTIFACTS_OBS
 ensure_success
-obs_task_prefix="obs.$TASK_TIMESTAMP"
+obs_task_prefix="$TASK_ID"
 if ls "$DP_ARTIFACTS_OBS"/"${obs_task_prefix}"* 1> /dev/null 2>&1; then
     echo "Observations dataset already exists:"
     ls "$DP_ARTIFACTS_OBS"/"${obs_task_prefix}"*
