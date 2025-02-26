@@ -97,11 +97,16 @@ conda env list
 mkdir -p $DP_ARTIFACTS_OBS
 ensure_success
 obs_task_prefix="obs.$TASK_TIMESTAMP"
-# python $DP_COMP_SIM/src/observation_sampling.py \
-#     --fp_scene $FP_SCENE \
-#     --dp_artifacts $DP_ARTIFACTS_OBS \
-#     --task_prefix $obs_task_prefix
-# ensure_success
+if ls "$DP_ARTIFACTS_OBS"/"${obs_task_prefix}"* 1> /dev/null 2>&1; then
+    echo "Observations dataset already exists:"
+    ls "$DP_ARTIFACTS_OBS"/"${obs_task_prefix}"*
+else
+    python $DP_COMP_SIM/src/observation_sampling.py \
+        --fp_scene $FP_SCENE \
+        --dp_artifacts $DP_ARTIFACTS_OBS \
+        --task_prefix $obs_task_prefix
+    ensure_success
+fi
 
 # loop for each floor
 dp_obs_floors=`find "$DP_ARTIFACTS_OBS" -type d -name "${obs_task_prefix}*"`
