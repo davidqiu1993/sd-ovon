@@ -7,6 +7,7 @@ DP_ARTIFACTS_OBS=$DP_ARTIFACTS/observations
 DP_ARTIFACTS_OBS_STD=$DP_ARTIFACTS/observations_std
 DP_ARTIFACTS_INSTEXT=$DP_ARTIFACTS/instance_extraction
 DP_ARTIFACTS_SSLAM=$DP_ARTIFACTS/semantic_slam
+DP_ARTIFACTS_SREL=$DP_ARTIFACTS/semantic_relating
 DP_COMP_3DSMAPS=$DP_ROOT/components/3dsmaps
 DP_COMP_SIM=$DP_ROOT/components/open-nav-sim
 
@@ -14,6 +15,7 @@ TASK_ID=$(date +"%Y%m%d_%H%M%S_%6N")
 RECEPTABLE_CLASSES="table desk dresser bookshelf shelf bed sofa couch"  # chair armchair stool
 NEGATIVE_CLASSES="sky building *room *office basement corridor floor wall corner ceiling furniture dark"
 FP_SCENE=""
+DP_OBJECTS=""
 GRAVITY_DIRECTION="-z"
 OLLAMA_HOST="http://localhost:11434"
 
@@ -33,6 +35,12 @@ while (( "$#" )); do
         -s|--scene)
             # path to scene file
             FP_SCENE="$2"
+            shift 2
+            ;;
+
+        -o|--objects)
+            # path to objects datasets directory
+            DP_OBJECTS="$2"
             shift 2
             ;;
 
@@ -80,6 +88,11 @@ if [[ "" == "$FP_SCENE" ]]; then
     exit 1
 fi
 
+if [[ "" == "$DP_OBJECTS" ]]; then
+    echo "ERROR: Missing required argument \"-o\" or \"--objects\".."
+    exit 1
+fi
+
 
 # prepare runtime environment
 cd $DP_ROOT
@@ -123,7 +136,7 @@ for dp_obs_floor in $dp_obs_floors; do
     # standardize observations dataset
     mkdir -p $DP_ARTIFACTS_OBS_STD
     ensure_success
-    dataset_name="`basename $dp_obs_floor`"".std"
+    dataset_name="`basename $dp_obs_floor`"
     dp_obs_floor_std="$DP_ARTIFACTS_OBS_STD""/""$dataset_name"
     if [[ ! -d $dp_obs_floor_std ]]; then
         python $DP_COMP_3DSMAPS/src/datasets.py \
@@ -152,6 +165,16 @@ for dp_obs_floor in $dp_obs_floors; do
         --artifacts="$DP_ARTIFACTS_SSLAM" \
         --gravity-direction="$GRAVITY_DIRECTION" \
         --ollama="$OLLAMA_HOST"
+    ensure_success
+
+    # semantic relating
+    mkdir -p $DP_ARTIFACTS_SREL
+    ensure_success
+    python $DP_COMP_3DSMAPS/src/semantic_relating.py \
+        --region-grids "$DP_ARTIFACTS_SSLAM""/""$dataset_name" \
+        --objects "$DP_OBJECTS" \
+        --artifacts "$DP_ARTIFACTS_SREL" \
+        --ollama "$OLLAMA_HOST"
     ensure_success
 
     # use conda environment
