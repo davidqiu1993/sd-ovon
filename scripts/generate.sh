@@ -8,8 +8,10 @@ DP_ARTIFACTS_OBS_STD=$DP_ARTIFACTS/observations_std
 DP_ARTIFACTS_INSTEXT=$DP_ARTIFACTS/instance_extraction
 DP_ARTIFACTS_SSLAM=$DP_ARTIFACTS/semantic_slam
 DP_ARTIFACTS_SREL=$DP_ARTIFACTS/semantic_relating
+DP_ARTIFACTS_INSTFUSION=$DP_ARTIFACTS/instance_fusion
 DP_COMP_3DSMAPS=$DP_ROOT/components/3dsmaps
 DP_COMP_SIM=$DP_ROOT/components/open-nav-sim
+DP_COMP_INSTFUSION=$DP_ROOT/components/open-nav-sim
 
 TASK_ID=$(date +"%Y%m%d_%H%M%S_%6N")
 RECEPTABLE_CLASSES="table desk dresser bookshelf shelf bed sofa couch"  # chair armchair stool
@@ -127,7 +129,7 @@ for dp_obs_floor in $dp_obs_floors; do
     dirname_obs_floor=`basename $dp_obs_floor`
     echo "Processing: \"$dirname_obs_floor\".."
 
-    # use 3dsmaps virtual environment
+    # activate 3dsmaps virtual environment
     conda deactivate
     ensure_success
     source $DP_COMP_3DSMAPS/env/bin/activate
@@ -177,7 +179,29 @@ for dp_obs_floor in $dp_obs_floors; do
         --ollama "$OLLAMA_HOST"
     ensure_success
 
-    # use conda environment
+    # activate instance fusion virtual environment
+    deactivate
+    ensure_success
+    source $DP_COMP_INSTFUSION/env/bin/activate
+    ensure_success
+
+    # instance fusion
+    python $DP_COMP_INSTFUSION/cfslam_pipeline_batch.py \
+        --dataset "$DP_ARTIFACTS_SREL""/""$dataset_name" \
+        --save "$DP_ARTIFACTS_INSTFUSION""/""$dataset_name" \
+        --classes $RECEPTABLE_CLASSES
+    ensure_success
+
+    # extract planes
+    for rcpt_cls in $RECEPTABLE_CLASSES; do
+        python $DP_COMP_INSTFUSION/extract_planes_EM.py \
+            --dir_path "$DP_ARTIFACTS_INSTFUSION""/""$dataset_name""/pcd_saves" \
+            --obs_meta "$DP_ARTIFACTS_OBS""/""$dataset_name""/meta.json" \
+            --class_name table
+        ensure_success
+    done
+
+    # activate conda environment
     deactivate
     ensure_success
     conda activate sd-ovon
