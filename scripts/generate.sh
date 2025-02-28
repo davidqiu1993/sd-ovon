@@ -2,6 +2,7 @@
 
 DP_ROOT=$(realpath $(dirname $0)/..)
 DP_DATA=$DP_ROOT/data
+DP_EXPORT=$DP_ROOT/data/sd-ovon
 DP_ARTIFACTS=$DP_DATA/artifacts
 DP_ARTIFACTS_OBS=$DP_ARTIFACTS/observations
 DP_ARTIFACTS_OBS_STD=$DP_ARTIFACTS/observations_std
@@ -11,7 +12,7 @@ DP_ARTIFACTS_SREL=$DP_ARTIFACTS/semantic_relating
 DP_ARTIFACTS_INSTFUSION=$DP_ARTIFACTS/instance_fusion
 DP_COMP_3DSMAPS=$DP_ROOT/components/3dsmaps
 DP_COMP_SIM=$DP_ROOT/components/open-nav-sim
-DP_COMP_INSTFUSION=$DP_ROOT/components/open-nav-sim
+DP_COMP_INSTFUSION=$DP_ROOT/components/instance-fusion
 
 TASK_ID=$(date +"%Y%m%d_%H%M%S_%6N")
 RECEPTABLE_CLASSES="table desk dresser bookshelf shelf bed sofa couch"  # chair armchair stool
@@ -186,16 +187,21 @@ for dp_obs_floor in $dp_obs_floors; do
     ensure_success
 
     # instance fusion
-    python $DP_COMP_INSTFUSION/cfslam_pipeline_batch.py \
-        --dataset "$DP_ARTIFACTS_SREL""/""$dataset_name" \
-        --save "$DP_ARTIFACTS_INSTFUSION""/""$dataset_name" \
-        --classes $RECEPTABLE_CLASSES
-    ensure_success
+    dp_inst_fusion="$DP_ARTIFACTS_INSTFUSION""/""$dataset_name"
+    if [[ ! -d "$dp_inst_fusion" ]]; then
+        python $DP_COMP_INSTFUSION/cfslam_pipeline_batch.py \
+            --dataset "$DP_ARTIFACTS_INSTEXT""/""$dataset_name" \
+            --save "$dp_inst_fusion" \
+            --classes $RECEPTABLE_CLASSES
+        ensure_success
+    else
+        echo "Instance fusion artifacts already exists: \"$dp_inst_fusion\"."
+    fi
 
     # extract planes
     for rcpt_cls in $RECEPTABLE_CLASSES; do
         python $DP_COMP_INSTFUSION/extract_planes_EM.py \
-            --dir_path "$DP_ARTIFACTS_INSTFUSION""/""$dataset_name" \
+            --dp_data "$dp_inst_fusion" \
             --obs_meta "$DP_ARTIFACTS_OBS""/""$dataset_name""/meta.json" \
             --class_name "$rcpt_cls"
         ensure_success
