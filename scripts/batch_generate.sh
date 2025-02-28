@@ -149,6 +149,7 @@ for ((i=0; i<${#fp_glb_files[@]}; i++)); do
         --gravity-direction "$gravity_direction" \
         --ollama-host "$OLLAMA_HOST" \
         --task-id "$task_id"
+    ensure_success
 
     echo ""
 done
