@@ -195,9 +195,9 @@ for dp_obs_floor in $dp_obs_floors; do
     # extract planes
     for rcpt_cls in $RECEPTABLE_CLASSES; do
         python $DP_COMP_INSTFUSION/extract_planes_EM.py \
-            --dir_path "$DP_ARTIFACTS_INSTFUSION""/""$dataset_name""/pcd_saves" \
+            --dir_path "$DP_ARTIFACTS_INSTFUSION""/""$dataset_name" \
             --obs_meta "$DP_ARTIFACTS_OBS""/""$dataset_name""/meta.json" \
-            --class_name table
+            --class_name "$rcpt_cls"
         ensure_success
     done
 
