@@ -2,6 +2,7 @@
 
 DP_ROOT=$(realpath $(dirname $0)/..)
 DP_DATA=$DP_ROOT/data
+DP_EXPORT=$DP_DATA/export
 DP_ARTIFACTS=$DP_DATA/artifacts
 DP_ARTIFACTS_OBS=$DP_ARTIFACTS/observations
 DP_ARTIFACTS_OBS_STD=$DP_ARTIFACTS/observations_std
@@ -10,6 +11,7 @@ DP_ARTIFACTS_SSLAM=$DP_ARTIFACTS/semantic_slam
 DP_ARTIFACTS_SREL=$DP_ARTIFACTS/semantic_relating
 DP_ARTIFACTS_INSTFUSION=$DP_ARTIFACTS/instance_fusion
 DP_ARTIFACTS_OBJPLC=$DP_ARTIFACTS/object_placement
+DP_ARTIFACTS_SCENE_INSTS=$DP_ARTIFACTS/scene_instances
 DP_COMP_3DSMAPS=$DP_ROOT/components/3dsmaps
 DP_COMP_SIM=$DP_ROOT/components/open-nav-sim
 DP_COMP_INSTFUSION=$DP_ROOT/components/instance-fusion
@@ -44,13 +46,13 @@ while (( "$#" )); do
             FP_SCENE="$2"
             shift 2
             ;;
-        
+
         -po|--place-objects)
             # number of objects to place
             PLACE_OBJECTS="$2"
             shift 2
             ;;
-        
+
         -pv|--placement-variations)
             # number of placement variations
             PLACEMENT_VARIATIONS="$2"
@@ -163,13 +165,13 @@ for dp_obs_floor in $dp_obs_floors; do
     fi
 
     # extract instances
-    mkdir -p $DP_ARTIFACTS_INSTEXT
-    ensure_success
-    python $DP_COMP_3DSMAPS/src/instance_extraction.py \
-        --dataset $dp_obs_floor_std \
-        --artifacts $DP_ARTIFACTS_INSTEXT \
-        --negative-classes $NEGATIVE_CLASSES
-    ensure_success
+    # mkdir -p $DP_ARTIFACTS_INSTEXT
+    # ensure_success
+    # python $DP_COMP_3DSMAPS/src/instance_extraction.py \
+    #     --dataset $dp_obs_floor_std \
+    #     --artifacts $DP_ARTIFACTS_INSTEXT \
+    #     --negative-classes $NEGATIVE_CLASSES
+    # ensure_success
 
     # semantic slam
     mkdir -p $DP_ARTIFACTS_SSLAM
@@ -240,5 +242,17 @@ for dp_obs_floor in $dp_obs_floors; do
     else
         echo "Object placement descriptions directory already exist: \"$DP_ARTIFACTS_OBJPLC""/""$dataset_name\"."
     fi
+
+    # place objects and generate scene instances files
+    mkdir -p $DP_EXPORT
+    for fp_placement_desc in "$DP_ARTIFACTS_OBJPLC""/""$dataset_name"/*; do
+        echo $fp_placement_desc
+        python $DP_COMP_SIM/src/object_placement.py \
+            --fp_scene $FP_SCENE \
+            --dp_objects "$DP_OBJECTS" \
+            --fp_object_placement_description "$fp_placement_desc" \
+            --output_dir "$DP_ARTIFACTS_SCENE_INSTS""/""$dataset_name"
+        ensure_success
+    done
 
 done
