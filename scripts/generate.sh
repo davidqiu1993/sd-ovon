@@ -11,7 +11,7 @@ DP_ARTIFACTS_SSLAM=$DP_ARTIFACTS/semantic_slam
 DP_ARTIFACTS_SREL=$DP_ARTIFACTS/semantic_relating
 DP_ARTIFACTS_INSTFUSION=$DP_ARTIFACTS/instance_fusion
 DP_ARTIFACTS_OBJPLC=$DP_ARTIFACTS/object_placement
-DP_ARTIFACTS_SCENE_INSTS=$DP_ARTIFACTS/scene_instances
+DP_ARTIFACTS_OBJ_INSTS=$DP_ARTIFACTS/object_instances
 DP_COMP_3DSMAPS=$DP_ROOT/components/3dsmaps
 DP_COMP_SIM=$DP_ROOT/components/open-nav-sim
 DP_COMP_INSTFUSION=$DP_ROOT/components/instance-fusion
@@ -251,7 +251,7 @@ for dp_obs_floor in $dp_obs_floors; do
             --fp_scene $FP_SCENE \
             --dp_objects "$DP_OBJECTS" \
             --fp_object_placement_description "$fp_placement_desc" \
-            --output_dir "$DP_ARTIFACTS_SCENE_INSTS""/""$dataset_name"
+            --output_dir "$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name"
         ensure_success
     done
 
