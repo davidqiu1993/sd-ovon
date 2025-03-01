@@ -4,7 +4,7 @@ DP_ROOT=$(realpath $(dirname $0)/..)
 DP_DATA=$DP_ROOT/data
 
 DP_SCENES=""
-DP_OBJECTS=""
+DP_OBJECTS=$DP_DATA/sd-ovon/objects
 DATASET_TYPE=""
 OLLAMA_HOST="http://localhost:11434"
 
@@ -68,11 +68,6 @@ eval set -- "$PARAMS"
 # check parameters
 if [[ "" == "$DP_SCENES" ]]; then
     echo "ERROR: Missing required argument \"-s\" or \"--scenes\".."
-    exit 1
-fi
-
-if [[ "" == "$DP_OBJECTS" ]]; then
-    echo "ERROR: Missing required argument \"-o\" or \"--objects\".."
     exit 1
 fi
 

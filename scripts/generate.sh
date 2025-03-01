@@ -2,7 +2,6 @@
 
 DP_ROOT=$(realpath $(dirname $0)/..)
 DP_DATA=$DP_ROOT/data
-DP_EXPORT=$DP_ROOT/data/sd-ovon
 DP_ARTIFACTS=$DP_DATA/artifacts
 DP_ARTIFACTS_OBS=$DP_ARTIFACTS/observations
 DP_ARTIFACTS_OBS_STD=$DP_ARTIFACTS/observations_std
@@ -18,14 +17,16 @@ TASK_ID=$(date +"%Y%m%d_%H%M%S_%6N")
 RECEPTABLE_CLASSES="table desk dresser bookshelf shelf bed sofa couch"  # chair armchair stool
 NEGATIVE_CLASSES="sky building *room *office basement corridor floor wall corner ceiling furniture dark"
 FP_SCENE=""
-DP_OBJECTS=""
+DP_OBJECTS=$DP_DATA/sd-ovon/objects
 GRAVITY_DIRECTION="-z"
 OLLAMA_HOST="http://localhost:11434"
+
+dataset_name=""
 
 
 function ensure_success() {
     if [[ $? -ne 0 ]]; then
-        echo "ERROR: Exception detected. (TASK_ID: $TASK_ID, FP_SCENE: $FP_SCENE)"
+        echo "ERROR: Exception detected. (TASK_ID: $TASK_ID, FP_SCENE: $FP_SCENE, dataset_name: $dataset_name)"
         exit 1;
     fi
 }
@@ -88,11 +89,6 @@ eval set -- "$PARAMS"
 # check parameters
 if [[ "" == "$FP_SCENE" ]]; then
     echo "ERROR: Missing required argument \"-s\" or \"--scene\".."
-    exit 1
-fi
-
-if [[ "" == "$DP_OBJECTS" ]]; then
-    echo "ERROR: Missing required argument \"-o\" or \"--objects\".."
     exit 1
 fi
 
