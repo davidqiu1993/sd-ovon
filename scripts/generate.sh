@@ -122,6 +122,29 @@ ensure_success
 conda env list
 
 
+# habitat: make directories
+mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/stages
+# mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/objects  # will be generated
+# mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/object_instances
+mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/scenes  # generate by dataset config generator
+mkdir -p $DP_EXPORT/data/datasets/objectnav/sd-ovon  # generate by episode generator
+
+# habitat: export stages
+if [[ ! -d $DP_EXPORT/data/scene_datasets/sd-ovon/stages/$(basename $(dirname $FP_SCENE)) ]]; then
+    cp -r $(dirname $FP_SCENE) $DP_EXPORT/data/scene_datasets/sd-ovon/stages
+    ensure_success
+    echo "Exported stages to habitat dataset: \"$DP_EXPORT/data/scene_datasets/sd-ovon/stages\""
+fi
+
+# habitat: export objects
+if [[ ! -d $DP_EXPORT/data/scene_datasets/sd-ovon/objects ]]; then
+    cp -r $DP_OBJECTS $DP_EXPORT/data/scene_datasets/sd-ovon/objects
+    ensure_success
+    rm $DP_EXPORT/data/scene_datasets/sd-ovon/objects/sdovon_object_dataset.scene_dataset_config.json
+    ensure_success
+    echo "Exported objects to habitat dataset: \"$DP_EXPORT/data/scene_datasets/sd-ovon/objects\""
+fi
+
 # sample observations
 mkdir -p $DP_ARTIFACTS_OBS
 ensure_success
@@ -165,13 +188,13 @@ for dp_obs_floor in $dp_obs_floors; do
     fi
 
     # extract instances
-    # mkdir -p $DP_ARTIFACTS_INSTEXT
-    # ensure_success
-    # python $DP_COMP_3DSMAPS/src/instance_extraction.py \
-    #     --dataset $dp_obs_floor_std \
-    #     --artifacts $DP_ARTIFACTS_INSTEXT \
-    #     --negative-classes $NEGATIVE_CLASSES
-    # ensure_success
+    mkdir -p $DP_ARTIFACTS_INSTEXT
+    ensure_success
+    python $DP_COMP_3DSMAPS/src/instance_extraction.py \
+        --dataset $dp_obs_floor_std \
+        --artifacts $DP_ARTIFACTS_INSTEXT \
+        --negative-classes $NEGATIVE_CLASSES
+    ensure_success
 
     # semantic slam
     mkdir -p $DP_ARTIFACTS_SSLAM
@@ -243,16 +266,24 @@ for dp_obs_floor in $dp_obs_floors; do
         echo "Object placement descriptions directory already exist: \"$DP_ARTIFACTS_OBJPLC""/""$dataset_name\"."
     fi
 
-    # place objects and generate scene instances files
+    # place objects and generate object instances files
     mkdir -p $DP_EXPORT
-    for fp_placement_desc in "$DP_ARTIFACTS_OBJPLC""/""$dataset_name"/*; do
-        echo $fp_placement_desc
-        python $DP_COMP_SIM/src/object_placement.py \
-            --fp_scene $FP_SCENE \
-            --dp_objects "$DP_OBJECTS" \
-            --fp_object_placement_description "$fp_placement_desc" \
-            --output_dir "$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name"
-        ensure_success
-    done
+    if [[ ! -d "$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name" ]]; then
+        for fp_placement_desc in "$DP_ARTIFACTS_OBJPLC""/""$dataset_name"/*; do
+            python $DP_COMP_SIM/src/object_placement.py \
+                --fp_scene $FP_SCENE \
+                --dp_objects "$DP_OBJECTS" \
+                --fp_object_placement_description "$fp_placement_desc" \
+                --output_dir "$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name"
+            ensure_success
+        done
+    else
+        echo "Object instances directory already exist: \"$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name\"."
+    fi
+
+    # habitat: export object instances files
+    cp "$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name"/* $DP_EXPORT/data/scene_datasets/sd-ovon/object_instances
+    ensure_success
+    echo "Exported object instances files to habitat dataset: \"$DP_EXPORT/data/scene_datasets/sd-ovon/object_instances\""
 
 done
