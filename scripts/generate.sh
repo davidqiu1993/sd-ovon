@@ -25,7 +25,7 @@ OLLAMA_HOST="http://localhost:11434"
 
 function ensure_success() {
     if [[ $? -ne 0 ]]; then
-        echo "ERROR: Exception detected."
+        echo "ERROR: Exception detected. (TASK_ID: $TASK_ID, FP_SCENE: $FP_SCENE)"
         exit 1;
     fi
 }

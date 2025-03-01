@@ -11,7 +11,7 @@ OLLAMA_HOST="http://localhost:11434"
 
 function ensure_success() {
     if [[ $? -ne 0 ]]; then
-        echo "ERROR: Exception detected."
+        echo "ERROR: Exception detected. (DP_SCENES: $DP_SCENES, DP_OBJECTS: $DP_OBJECTS, DATASET_TYPE: $DATASET_TYPE)"
         exit 1;
     fi
 }
