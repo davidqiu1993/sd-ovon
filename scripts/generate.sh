@@ -9,6 +9,7 @@ DP_ARTIFACTS_INSTEXT=$DP_ARTIFACTS/instance_extraction
 DP_ARTIFACTS_SSLAM=$DP_ARTIFACTS/semantic_slam
 DP_ARTIFACTS_SREL=$DP_ARTIFACTS/semantic_relating
 DP_ARTIFACTS_INSTFUSION=$DP_ARTIFACTS/instance_fusion
+DP_ARTIFACTS_OBJPLC=$DP_ARTIFACTS/object_placement
 DP_COMP_3DSMAPS=$DP_ROOT/components/3dsmaps
 DP_COMP_SIM=$DP_ROOT/components/open-nav-sim
 DP_COMP_INSTFUSION=$DP_ROOT/components/instance-fusion
@@ -17,6 +18,8 @@ TASK_ID=$(date +"%Y%m%d_%H%M%S_%6N")
 RECEPTABLE_CLASSES="table desk dresser bookshelf shelf bed sofa couch"  # chair armchair stool
 NEGATIVE_CLASSES="sky building *room *office basement corridor floor wall corner ceiling furniture dark"
 FP_SCENE=""
+PLACE_OBJECTS=10
+PLACEMENT_VARIATIONS=10
 DP_OBJECTS=$DP_DATA/sd-ovon/objects
 GRAVITY_DIRECTION="-z"
 OLLAMA_HOST="http://localhost:11434"
@@ -39,6 +42,18 @@ while (( "$#" )); do
         -s|--scene)
             # path to scene file
             FP_SCENE="$2"
+            shift 2
+            ;;
+        
+        -po|--place-objects)
+            # number of objects to place
+            PLACE_OBJECTS="$2"
+            shift 2
+            ;;
+        
+        -pv|--placement-variations)
+            # number of placement variations
+            PLACEMENT_VARIATIONS="$2"
             shift 2
             ;;
 
@@ -196,11 +211,13 @@ for dp_obs_floor in $dp_obs_floors; do
 
     # extract planes
     for rcpt_cls in $RECEPTABLE_CLASSES; do
-        python $DP_COMP_INSTFUSION/extract_planes_EM.py \
-            --dp_data "$dp_inst_fusion" \
-            --obs_meta "$DP_ARTIFACTS_OBS""/""$dataset_name""/meta.json" \
-            --class_name "$rcpt_cls"
-        ensure_success
+        if [[ ! -f "$dp_inst_fusion""/planes/""$rcpt_cls"".pkl" ]]; then
+            python $DP_COMP_INSTFUSION/extract_planes_EM.py \
+                --dp_data "$dp_inst_fusion" \
+                --obs_meta "$DP_ARTIFACTS_OBS""/""$dataset_name""/meta.json" \
+                --class_name "$rcpt_cls"
+            ensure_success
+        fi
     done
 
     # activate conda environment
@@ -208,5 +225,20 @@ for dp_obs_floor in $dp_obs_floors; do
     ensure_success
     conda activate sd-ovon
     ensure_success
+
+    # generate object placements
+    if [[ ! -d "$DP_ARTIFACTS_OBJPLC""/""$dataset_name" ]]; then
+        python $DP_COMP_SIM/src/dynamic_scene_gen.py \
+            --objects "$DP_OBJECTS" \
+            --region-grids "$DP_ARTIFACTS_SSLAM""/""$dataset_name" \
+            --semantic-relevances "$DP_ARTIFACTS_SREL""/""$dataset_name" \
+            --planes "$DP_ARTIFACTS_INSTFUSION""/""$dataset_name""/planes" \
+            --save "$DP_ARTIFACTS_OBJPLC""/""$dataset_name" \
+            --place-objects $PLACE_OBJECTS \
+            --placement-variants $PLACEMENT_VARIATIONS
+        ensure_success
+    else
+        echo "Object placement descriptions directory already exist: \"$DP_ARTIFACTS_OBJPLC""/""$dataset_name\"."
+    fi
 
 done
