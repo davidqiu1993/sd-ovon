@@ -2,6 +2,7 @@
 
 DP_ROOT=$(realpath $(dirname $0)/..)
 DP_DATA=$DP_ROOT/data
+DP_SCRIPTS=$DP_ROOT/scripts
 DP_EXPORT=$DP_DATA/export
 DP_ARTIFACTS=$DP_DATA/artifacts
 DP_ARTIFACTS_OBS=$DP_ARTIFACTS/observations
@@ -189,13 +190,13 @@ for dp_obs_floor in $dp_obs_floors; do
     fi
 
     # extract instances
-    mkdir -p $DP_ARTIFACTS_INSTEXT
-    ensure_success
-    python $DP_COMP_3DSMAPS/src/instance_extraction.py \
-        --dataset $dp_obs_floor_std \
-        --artifacts $DP_ARTIFACTS_INSTEXT \
-        --negative-classes $NEGATIVE_CLASSES
-    ensure_success
+    # mkdir -p $DP_ARTIFACTS_INSTEXT
+    # ensure_success
+    # python $DP_COMP_3DSMAPS/src/instance_extraction.py \
+    #     --dataset $dp_obs_floor_std \
+    #     --artifacts $DP_ARTIFACTS_INSTEXT \
+    #     --negative-classes $NEGATIVE_CLASSES
+    # ensure_success
 
     # semantic slam
     mkdir -p $DP_ARTIFACTS_SSLAM
@@ -306,5 +307,22 @@ for dp_obs_floor in $dp_obs_floors; do
     cp "$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name"/* $DP_EXPORT/data/scene_datasets/sd-ovon/object_instances
     ensure_success
     echo "Exported object instances files to habitat dataset: \"$DP_EXPORT/data/scene_datasets/sd-ovon/object_instances\""
+
+    # generate scene instances
+    bash $DP_SCRIPTS/generate_scene_instances.sh
+
+    # generate episode dataset
+    bash $DP_SCRIPTS/generate_episode_dataset.sh
+    for fp_obj_insts in "$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name"/*; do
+        fname_obj_insts=$(basename $fp_obj_insts)
+        scene_name="${fname_obj_insts:0:${#fname_obj_insts}-22}"
+        python $DP_EXPORT/dataset_gen.py \
+            --output_dir $DP_EXPORT/data/datasets/objectnav/sd-ovon/val/content \
+            --scene_id $scene_name \
+            --fp_goal_cat $DP_EXPORT/episode_gen/data/dataset_config/semantic_id_mapping_cat_153.json \
+            --fp_object_categories $DP_EXPORT/episode_gen/data/dataset_config/sd-ovon.object_categories.json \
+            --dp_object_configs $DP_EXPORT/data/export/data/scene_datasets/sd-ovon/objects/configs \
+            --dp_scene_instances $DP_EXPORT/data/scene_datasets/sd-ovon/scenes
+    done
 
 done

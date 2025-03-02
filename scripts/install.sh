@@ -23,4 +23,5 @@ ensure_success
 conda env list
 
 
-# TODO: install
+# install pip packages
+pip install trimesh
