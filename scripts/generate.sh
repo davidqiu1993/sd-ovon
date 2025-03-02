@@ -140,7 +140,7 @@ if [[ ! -d $DP_EXPORT/data/scene_datasets/sd-ovon/stages/$(basename $(dirname $F
     echo "Exported stages to habitat dataset: \"$DP_EXPORT/data/scene_datasets/sd-ovon/stages_data\""
 fi
 
-# habitat: export objects
+# habitat: export objects data
 if [[ ! -d $DP_EXPORT/data/scene_datasets/sd-ovon/objects ]]; then
     cp -r $DP_OBJECTS $DP_EXPORT/data/scene_datasets/sd-ovon/objects
     ensure_success
@@ -148,6 +148,29 @@ if [[ ! -d $DP_EXPORT/data/scene_datasets/sd-ovon/objects ]]; then
     ensure_success
     echo "Exported objects to habitat dataset: \"$DP_EXPORT/data/scene_datasets/sd-ovon/objects\""
 fi
+
+# habitat: export val object ids mapping file
+mkdir -p $DP_EXPORT/data/datasets/objectnav/sd-ovon/val
+fp_val_json=$DP_EXPORT/data/datasets/objectnav/sd-ovon/val/val.json
+fp_val_json_gz="$fp_val_json"".gz"
+
+echo "{" > $fp_val_json
+ensure_success
+echo "    \"episodes\": []," >> $fp_val_json
+ensure_success
+echo "    \"category_to_task_category_id\": "$(cat $DP_EXPORT/data/scene_datasets/sd-ovon/objects/sdovon_object_dataset.object_category_ids.json)"," >> $fp_val_json
+ensure_success
+echo "    \"category_to_scene_annotation_category_id\": "$(cat $DP_EXPORT/data/scene_datasets/sd-ovon/objects/sdovon_object_dataset.object_category_ids.json) >> $fp_val_json
+ensure_success
+echo "}" >> $fp_val_json
+ensure_success
+
+python $DP_ROOT/src/gz_compressor.py \
+    --input-json $fp_val_json \
+    --output-json-gz $fp_val_json_gz
+ensure_success
+
+echo "Exported val object ids mapping file: \"$fp_val_json_gz\""
 
 # sample observations
 mkdir -p $DP_ARTIFACTS_OBS
@@ -334,8 +357,8 @@ for dp_obs_floor in $dp_obs_floors; do
         python $DP_EXPORT/dataset_gen.py \
             --output_dir $DP_EXPORT/data/datasets/objectnav/sd-ovon/val/content \
             --scene_id $scene_name \
-            --fp_goal_cat $DP_EXPORT/episode_gen/data/dataset_config/semantic_id_mapping_cat_153.json \
-            --fp_object_categories $DP_EXPORT/episode_gen/data/dataset_config/sd-ovon.object_categories.json \
+            --fp_goal_cat $DP_EXPORT/data/scene_datasets/sd-ovon/objects/sdovon_object_dataset.object_category_ids.json \
+            --fp_object_categories $DP_EXPORT/data/scene_datasets/sd-ovon/objects/sdovon_object_dataset.object_categories.json \
             --dp_object_configs $DP_EXPORT/data/scene_datasets/sd-ovon/objects/configs \
             --dp_scene_instances $DP_EXPORT/data/scene_datasets/sd-ovon/scenes
         ensure_success
