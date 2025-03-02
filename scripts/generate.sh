@@ -336,7 +336,7 @@ for dp_obs_floor in $dp_obs_floors; do
             --scene_id $scene_name \
             --fp_goal_cat $DP_EXPORT/episode_gen/data/dataset_config/semantic_id_mapping_cat_153.json \
             --fp_object_categories $DP_EXPORT/episode_gen/data/dataset_config/sd-ovon.object_categories.json \
-            --dp_object_configs $DP_EXPORT/data/export/data/scene_datasets/sd-ovon/objects/configs \
+            --dp_object_configs $DP_EXPORT/data/scene_datasets/sd-ovon/objects/configs \
             --dp_scene_instances $DP_EXPORT/data/scene_datasets/sd-ovon/scenes
         ensure_success
     done
