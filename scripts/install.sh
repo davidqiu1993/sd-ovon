@@ -24,4 +24,4 @@ conda env list
 
 
 # install pip packages
-pip install trimesh
+python -m pip install trimesh
