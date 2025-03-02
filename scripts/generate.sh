@@ -22,7 +22,7 @@ RECEPTABLE_CLASSES="table desk dresser bookshelf shelf bed sofa couch"  # chair 
 NEGATIVE_CLASSES="sky building *room *office basement corridor floor wall corner ceiling furniture dark"
 FP_SCENE=""
 PLACE_OBJECTS=10
-PLACEMENT_VARIATIONS=10
+PLACEMENT_VARIATIONS=50
 DP_OBJECTS=$DP_DATA/sd-ovon/objects
 GRAVITY_DIRECTION="-z"
 OLLAMA_HOST="http://localhost:11434"
@@ -215,13 +215,13 @@ for dp_obs_floor in $dp_obs_floors; do
     fi
 
     # extract instances
-    # mkdir -p $DP_ARTIFACTS_INSTEXT
-    # ensure_success
-    # python $DP_COMP_3DSMAPS/src/instance_extraction.py \
-    #     --dataset $dp_obs_floor_std \
-    #     --artifacts $DP_ARTIFACTS_INSTEXT \
-    #     --negative-classes $NEGATIVE_CLASSES
-    # ensure_success
+    mkdir -p $DP_ARTIFACTS_INSTEXT
+    ensure_success
+    python $DP_COMP_3DSMAPS/src/instance_extraction.py \
+        --dataset $dp_obs_floor_std \
+        --artifacts $DP_ARTIFACTS_INSTEXT \
+        --negative-classes $NEGATIVE_CLASSES
+    ensure_success
 
     # semantic slam
     mkdir -p $DP_ARTIFACTS_SSLAM
@@ -306,6 +306,12 @@ for dp_obs_floor in $dp_obs_floors; do
         done
     else
         echo "Object instances directory already exist: \"$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name\"."
+    fi
+
+    # check if any object instances file generated
+    if [[ -z $(ls $DP_ARTIFACTS_OBJ_INSTS/$dataset_name) ]]; then
+        echo "No object instances generated: ""$dataset_name"
+        continue
     fi
 
     # habitat: create soft links for stages
