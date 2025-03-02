@@ -35,3 +35,9 @@ if [[ ! -f $DP_EXPORT/dataset_gen.py ]]; then
     ln -s $DP_COMP_SIM/episode_generator/dataset_gen.py dataset_gen.py
     cd -
 fi
+
+if [[ ! -f $DP_COMP_SIM/third-party/habitat-lab/habitat-lab/habitat/config/benchmark/nav/objectnav/objectnav_sd-ovon_with_semantic.yaml ]]; then
+    cp $DP_COMP_SIM/episode_generator/episode_gen/data/dataset_config/objectnav_sd-ovon_with_semantic.yaml \
+        $DP_COMP_SIM/third-party/habitat-lab/habitat-lab/habitat/config/benchmark/nav/objectnav
+    ensure_success
+fi

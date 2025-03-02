@@ -32,6 +32,7 @@ dataset_name=""
 
 function ensure_success() {
     if [[ $? -ne 0 ]]; then
+        echo ""
         echo "ERROR: Exception detected. (TASK_ID: $TASK_ID, FP_SCENE: $FP_SCENE, dataset_name: $dataset_name)"
         exit 1;
     fi
@@ -123,7 +124,8 @@ ensure_success
 conda env list
 
 
-# habitat: make directories
+# habitat: prepare dataset export directories
+rm -r $DP_EXPORT/data
 mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/stages
 mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/stages_data
 # mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/objects  # will be generated
@@ -286,21 +288,31 @@ for dp_obs_floor in $dp_obs_floors; do
     # habitat: create soft links for stages
     for fp_obj_insts in "$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name"/*; do
         fname_obj_insts=$(basename $fp_obj_insts)
-        scene_name="${fname_obj_insts:0:${#fname_obj_insts}-22}"
-        scene_dir_name=$(basename $(dirname $FP_SCENE))"."${scene_name:${#scene_name}-4:${#scene_name}}
-        scene_data_name=$(basename $(dirname $FP_SCENE))
-        rm -r $DP_EXPORT/data/scene_datasets/sd-ovon/stages/$scene_dir_name
-        mkdir $DP_EXPORT/data/scene_datasets/sd-ovon/stages/$scene_dir_name
+        placement_scene_name="${fname_obj_insts:0:${#fname_obj_insts}-22}"
+        placement_scene_dir_name=$(basename $(dirname $FP_SCENE))"_"${placement_scene_name:${#placement_scene_name}-4:${#placement_scene_name}}
+
+        original_scene_file_name=$(basename $FP_SCENE)
+        original_scene_name=${original_scene_file_name%%.*}
+        original_scene_dir_name=$(basename $(dirname $FP_SCENE))
+
+        rm -r $DP_EXPORT/data/scene_datasets/sd-ovon/stages/$placement_scene_dir_name
+        mkdir $DP_EXPORT/data/scene_datasets/sd-ovon/stages/$placement_scene_dir_name
         ensure_success
-        cd $DP_EXPORT/data/scene_datasets/sd-ovon/stages/$scene_dir_name
+
+        cd $DP_EXPORT/data/scene_datasets/sd-ovon/stages/$placement_scene_dir_name
         ensure_success
-        ln -s ../../stages_data/$scene_data_name/$scene_data_name".basis.glb" $scene_name".basis.glb"
+
+        ln -s ../../stages_data/$original_scene_dir_name/$original_scene_name".basis.glb" \
+            $placement_scene_name".basis.glb"
         ensure_success
-        ln -s ../../stages_data/$scene_data_name/$scene_data_name".basis.navmesh" $scene_name".basis.navmesh"
+        ln -s ../../stages_data/$original_scene_dir_name/$original_scene_name".basis.navmesh" \
+            $placement_scene_name".basis.navmesh"
         ensure_success
+
         cd -
         ensure_success
-        echo "Created soft link for stage: $scene_name"
+
+        echo "Created soft link for stage: $original_scene_name -> $placement_scene_name"
     done
 
     # habitat: export object instances files
@@ -311,8 +323,11 @@ for dp_obs_floor in $dp_obs_floors; do
     # generate scene instances
     bash $DP_SCRIPTS/generate_scene_instances.sh
 
+    # configure episode generator
+    bash $DP_SCRIPTS/configure_episode_generator.sh
+
     # generate episode dataset
-    bash $DP_SCRIPTS/generate_episode_dataset.sh
+    cd $DP_EXPORT
     for fp_obj_insts in "$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name"/*; do
         fname_obj_insts=$(basename $fp_obj_insts)
         scene_name="${fname_obj_insts:0:${#fname_obj_insts}-22}"
@@ -323,6 +338,8 @@ for dp_obs_floor in $dp_obs_floors; do
             --fp_object_categories $DP_EXPORT/episode_gen/data/dataset_config/sd-ovon.object_categories.json \
             --dp_object_configs $DP_EXPORT/data/export/data/scene_datasets/sd-ovon/objects/configs \
             --dp_scene_instances $DP_EXPORT/data/scene_datasets/sd-ovon/scenes
+        ensure_success
     done
+    cd -
 
 done
