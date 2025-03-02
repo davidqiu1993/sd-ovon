@@ -125,7 +125,6 @@ conda env list
 
 
 # habitat: prepare dataset export directories
-rm -r $DP_EXPORT/data
 mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/stages
 mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/stages_data
 # mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/objects  # will be generated
