@@ -124,16 +124,17 @@ conda env list
 
 # habitat: make directories
 mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/stages
+mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/stages_data
 # mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/objects  # will be generated
-# mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/object_instances
+mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/object_instances
 mkdir -p $DP_EXPORT/data/scene_datasets/sd-ovon/scenes  # generate by dataset config generator
 mkdir -p $DP_EXPORT/data/datasets/objectnav/sd-ovon  # generate by episode generator
 
-# habitat: export stages
+# habitat: export stages data
 if [[ ! -d $DP_EXPORT/data/scene_datasets/sd-ovon/stages/$(basename $(dirname $FP_SCENE)) ]]; then
-    cp -r $(dirname $FP_SCENE) $DP_EXPORT/data/scene_datasets/sd-ovon/stages
+    cp -r $(dirname $FP_SCENE) $DP_EXPORT/data/scene_datasets/sd-ovon/stages_data
     ensure_success
-    echo "Exported stages to habitat dataset: \"$DP_EXPORT/data/scene_datasets/sd-ovon/stages\""
+    echo "Exported stages to habitat dataset: \"$DP_EXPORT/data/scene_datasets/sd-ovon/stages_data\""
 fi
 
 # habitat: export objects
@@ -280,6 +281,26 @@ for dp_obs_floor in $dp_obs_floors; do
     else
         echo "Object instances directory already exist: \"$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name\"."
     fi
+
+    # habitat: create soft links for stages
+    for fp_obj_insts in "$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name"/*; do
+        fname_obj_insts=$(basename $fp_obj_insts)
+        scene_name="${fname_obj_insts:0:${#fname_obj_insts}-22}"
+        scene_dir_name=$(basename $(dirname $FP_SCENE))"."${scene_name:${#scene_name}-4:${#scene_name}}
+        scene_data_name=$(basename $(dirname $FP_SCENE))
+        rm -r $DP_EXPORT/data/scene_datasets/sd-ovon/stages/$scene_dir_name
+        mkdir $DP_EXPORT/data/scene_datasets/sd-ovon/stages/$scene_dir_name
+        ensure_success
+        cd $DP_EXPORT/data/scene_datasets/sd-ovon/stages/$scene_dir_name
+        ensure_success
+        ln -s ../../stages_data/$scene_data_name/$scene_data_name".basis.glb" $scene_name".basis.glb"
+        ensure_success
+        ln -s ../../stages_data/$scene_data_name/$scene_data_name".basis.navmesh" $scene_name".basis.navmesh"
+        ensure_success
+        cd -
+        ensure_success
+        echo "Created soft link for stage: $scene_name"
+    done
 
     # habitat: export object instances files
     cp "$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name"/* $DP_EXPORT/data/scene_datasets/sd-ovon/object_instances
