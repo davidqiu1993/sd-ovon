@@ -7,6 +7,7 @@ DP_COMP_SIM=$DP_ROOT/components/open-nav-sim
 
 DP_OBJECTS=$DP_ROOT/data/habitat/objects_datasets
 SHALL_OVERWRITE=false
+BUILD_MODE=""
 
 
 function ensure_success() {
@@ -26,11 +27,17 @@ while (( "$#" )); do
             DP_OBJECTS="$2"
             shift 2
             ;;
-        
+
         --overwrite)
             # overwrite existing files
             SHALL_OVERWRITE=true
             shift 1
+            ;;
+
+        --build)
+            # build mode
+            BUILD_MODE="$2"
+            shift 2
             ;;
 
         --) # end argument parsing
@@ -77,9 +84,38 @@ conda env list
 # generate objects dataset
 mkdir -p $DP_EXPORT/objects
 ensure_success
-python $DP_COMP_SIM/src/dataset.py \
-    --objects $DP_OBJECTS \
-    --save $DP_EXPORT/objects \
-    --name sdovon_object_dataset \
-    --force-flat-shading
-ensure_success
+
+case "$BUILD_MODE" in
+    "l3mvn")
+        # build for L3MVN baseline
+        python $DP_COMP_SIM/src/dataset.py \
+            --objects $DP_OBJECTS \
+            --save $DP_EXPORT/objects \
+            --name sdovon_object_dataset \
+            --force-flat-shading \
+            --filter-by-categories "apple" "banana" "baseballbat" "basketball" "bottle" "bowl" "book" "clock" "cup" "cups" "fork" "handbag" "knife" "laptop" "orange" "scissors" "spoon" "tennis_racquet" "vase" "stuffed toy" "stuffed_toy"
+        ensure_success
+        ;;
+
+    "coco")
+        # build for coco compatible dataset
+        python $DP_COMP_SIM/src/dataset.py \
+            --objects $DP_OBJECTS \
+            --save $DP_EXPORT/objects \
+            --name sdovon_object_dataset \
+            --force-flat-shading \
+            --filter-by-categories "apple" "banana" "baseballbat" "basketball" "bottle" "bowl" "book" "clock" "cup" "cups" "fork" "handbag" "knife" "laptop" "orange" "scissors" "spoon" "tennis_racquet" "vase" \
+            --rename-categories "apple" "banana" "baseball bat" "sports ball" "bottle" "bowl" "book" "clock" "cup" "cup" "fork" "handbag" "knife" "laptop" "orange" "scissors" "spoon" "tennis racket" "vase"
+        ensure_success
+        ;;
+
+    *)
+        # default mode
+        python $DP_COMP_SIM/src/dataset.py \
+            --objects $DP_OBJECTS \
+            --save $DP_EXPORT/objects \
+            --name sdovon_object_dataset \
+            --force-flat-shading
+        ensure_success
+        ;;
+esac
