@@ -292,6 +292,12 @@ for dp_obs_floor in $dp_obs_floors; do
         echo "Object placement descriptions directory already exist: \"$DP_ARTIFACTS_OBJPLC""/""$dataset_name\"."
     fi
 
+    # check if there is any object placement file generated
+    if [[ -z $(ls $DP_ARTIFACTS_OBJPLC/$dataset_name) ]]; then
+        echo "No object placement generated: ""$dataset_name"
+        continue
+    fi
+
     # place objects and generate object instances files
     mkdir -p $DP_EXPORT
     if [[ ! -d "$DP_ARTIFACTS_OBJ_INSTS""/""$dataset_name" ]]; then
@@ -336,6 +342,10 @@ for dp_obs_floor in $dp_obs_floors; do
         ln -s ../../stages_data/$original_scene_dir_name/$original_scene_name".basis.navmesh" \
             $placement_scene_name".basis.navmesh"
         ensure_success
+        ln -s ../../stages_data/$original_scene_dir_name/$original_scene_name".semantic.glb" \
+            $placement_scene_name".semantic.glb"
+        ln -s ../../stages_data/$original_scene_dir_name/$original_scene_name".semantic.txt" \
+            $placement_scene_name".semantic.txt"
 
         cd -
         ensure_success
