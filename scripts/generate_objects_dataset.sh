@@ -115,7 +115,9 @@ case "$BUILD_MODE" in
             --objects $DP_OBJECTS \
             --save $DP_EXPORT/objects \
             --name sdovon_object_dataset \
-            --force-flat-shading
+            --force-flat-shading \
+            --set-category-semantics \
+            --semantic-id-from 5000
         ensure_success
         ;;
 esac
